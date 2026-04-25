@@ -7,6 +7,7 @@ import {
 import { hpIv } from "../common/pokemon.js";
 
 const PARTY_SIZE = 6;
+let previousGamestate = 'No Pokemon';
 
 function getGamestate() {
   // FSM FOR GAMESTATE TRACKING
@@ -30,7 +31,7 @@ function getGamestate() {
   else if (battle_start == 0) {
     return 'To Battle'
   }
-  else if (low_health_alarm == "Disabled" || outcome_flags > 0) {
+  else if (low_health_alarm == 'Disabled' || outcome_flags > 0) {
     return 'From Battle'
   }
   else {
@@ -38,14 +39,30 @@ function getGamestate() {
   }
 }
 
-function getBattleOutcome() {
+function getBattleOutcome(stateOverride = null) {
   const outcome_flags = getValue('battle.other.outcome_flags')
-  const state = getGamestate()
+  const battle_start = getValue('battle.other.battle_start')
+  const low_health_alarm = getValue('battle.other.low_health_alarm')
+  const battle_mode = getValue('battle.mode')
+  const team_0_level = getValue('player.team.0.level')
+  const state = stateOverride || getGamestate()
+  if (state !== 'From Battle') {
+    return null
+  }
+
+  // Reject stale teardown/reset frames that can otherwise emit a false Win.
+  if (team_0_level === 0 || battle_mode == null || battle_start !== 1) {
+    return null
+  }
+
   switch (state) {
     case 'From Battle':
       switch (outcome_flags) {
         case 0:
-          return 'Win'
+          if (low_health_alarm == 'Disabled') {
+            return 'Win'
+          }
+          return null
         case 1:
           return 'Lose'
         case 2:
@@ -79,9 +96,11 @@ function getPlayerPartyPosition() {
 
 export function postprocessor() {
   const gamestate = getGamestate()
-  
+  const battleOutcome = getBattleOutcome(gamestate)
+
   setValue('meta.state', gamestate)
-  setValue('battle.outcome', getBattleOutcome())
+  setValue('battle.outcome', battleOutcome || '')
+
   setValue('player.party_position', getPlayerPartyPosition())
 
   //Set player.active_pokemon properties
@@ -144,4 +163,6 @@ export function postprocessor() {
 
     setValue(`player.team.${index}.ivs.hp`, hpIv(ivs));
   }
+
+  previousGamestate = gamestate
 }
