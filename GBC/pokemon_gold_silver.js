@@ -20,25 +20,91 @@ export function getGamestate() {
   const low_health_alarm = getValue('battle.other.low_health_alarm')
   const team_0_species = getValue('player.team.0.species')
   const player_battle_species = getValue('battle.player.active_pokemon.species')
-  const state = getValue('meta.state')
+  const gamestate = getValue('meta.state')
   if (team_0_level == 0) {
     return 'No Pokemon'
   }
   else if (battle_mode == null) {
     return 'Overworld'
   }	
-  else if (low_health_alarm == "Disabled" || outcome_flags > 0) {
+  // The alarm is also disabled when a single Pokemon faints. It does not
+  // mean the battle has ended while either side still has a replacement.
+  else if ((low_health_alarm == "Disabled" || outcome_flags > 0) &&
+    (getRemainingPokemonCount('player', battle_mode) === 0 ||
+      getRemainingPokemonCount('opponent', battle_mode) === 0)) {
     return 'From Battle'
   }
   else if (team_0_species == player_battle_species) {
     return 'Battle'
   }
-  else if ((state == 'Overworld' || state == 'To Battle') && battle_mode != null) {
+  else if ((gamestate == 'Overworld' || gamestate == 'To Battle') && battle_mode != null) {
     return 'To Battle'
   }
   else {
     return 'Battle'
   }
+}
+
+function readBattleTeamValue(path) {
+  try {
+    return getValue(path);
+  } catch (_) {
+    return null;
+  }
+}
+
+function validBattleTeamHp(hp) {
+  return Number.isInteger(hp) && hp >= 0;
+}
+
+function battleTeamIdentity(root) {
+  const species = readBattleTeamValue(`${root}.species`);
+  const level = readBattleTeamValue(`${root}.level`);
+  const hpMax = readBattleTeamValue(`${root}.stats.hp_max`);
+  if (species == null || species === '' ||
+    !Number.isInteger(level) || level <= 0 ||
+    !Number.isInteger(hpMax) || hpMax <= 0) return null;
+  return `${species}|${level}|${hpMax}`;
+}
+
+export function getRemainingPokemonCount(side, battleMode) {
+  if (side !== 'player' && side !== 'opponent') return null;
+  const battleRoot = `battle.${side}`;
+  if (side === 'opponent' && battleMode === 'Wild') {
+    // Wild encounters do not own the trainer-party memory left by a prior fight.
+    const hp = readBattleTeamValue(`${battleRoot}.active_pokemon.stats.hp`);
+    return validBattleTeamHp(hp) ? (hp > 0 ? 1 : 0) : null;
+  }
+
+  const teamRoot = side === 'player' ? 'player' : battleRoot;
+  const teamCount = readBattleTeamValue(`${teamRoot}.team_count`);
+  // Missing/uninitialized telemetry is not proof that an entire team fainted.
+  if (!Number.isInteger(teamCount) || teamCount < 1 || teamCount > 6) return null;
+
+  const activeIndex = readBattleTeamValue(`${battleRoot}.party_position`);
+  const activeHp = readBattleTeamValue(`${battleRoot}.active_pokemon.stats.hp`);
+  const activeIdentity = battleTeamIdentity(`${battleRoot}.active_pokemon`);
+  let activeMatches = 0;
+  if (activeIdentity != null) {
+    for (let index = 0; index < teamCount; index++) {
+      if (battleTeamIdentity(`${teamRoot}.team.${index}`) === activeIdentity) activeMatches++;
+    }
+  }
+
+  let remaining = 0;
+  for (let index = 0; index < teamCount; index++) {
+    const memberRoot = `${teamRoot}.team.${index}`;
+    let hp = readBattleTeamValue(`${memberRoot}.stats.hp`);
+    if (!validBattleTeamHp(hp)) return null;
+    // Battle HP can reach zero before the party record is synchronized. Use it
+    // only for an unambiguous matched record: party_position can change before
+    // the outgoing active alias settles, including between identical species.
+    if (index === activeIndex && validBattleTeamHp(activeHp) &&
+      activeIdentity != null && activeMatches === 1 &&
+      battleTeamIdentity(memberRoot) === activeIdentity) hp = activeHp;
+    if (hp > 0) remaining++;
+  }
+  return remaining;
 }
 
 export function getEncounterRate() {
@@ -66,6 +132,10 @@ export function getEncounterRate() {
 export function getBattleOutcome() {
   const outcome_flags = getValue('battle.other.outcome_flags')
   const gamestate = getGamestate()
+  // Escaping ends an encounter without either team being knocked out. Keep
+  // that result observable without bypassing the all-KO From Battle gate.
+  if (gamestate !== 'Overworld' && gamestate !== 'No Pokemon' &&
+    [2, 66, 130, 194].includes(outcome_flags)) return 'Flee';
   switch (gamestate) {
     case 'From Battle':
       switch (outcome_flags) {
@@ -79,11 +149,6 @@ export function getBattleOutcome() {
         case 129:
         case 193:
           return 'Lose'
-        case 2:
-        case 66:
-        case 130:
-        case 194:
-          return 'Flee'
         default:
           return null
       }
