@@ -2131,6 +2131,63 @@
             <!-- TODO: setup enemy state logic -->
 			<!-- <property name="state_enemy"    type="string" /> -->
         </meta>
+        <pc>
+            <item_storage>
+                <property name="item_count" type="int" address="0xD8F1" />
+                <items>
+                    <class name="0" type="player_item" var:address="0xD8F2" />
+                    <class name="1" type="player_item" var:address="0xD8F4" />
+                    <class name="2" type="player_item" var:address="0xD8F6" />
+                    <class name="3" type="player_item" var:address="0xD8F8" />
+                    <class name="4" type="player_item" var:address="0xD8FA" />
+                    <class name="5" type="player_item" var:address="0xD8FC" />
+                    <class name="6" type="player_item" var:address="0xD8FE" />
+                    <class name="7" type="player_item" var:address="0xD900" />
+                    <class name="8" type="player_item" var:address="0xD902" />
+                    <class name="9" type="player_item" var:address="0xD904" />
+                    <class name="10" type="player_item" var:address="0xD906" />
+                    <class name="11" type="player_item" var:address="0xD908" />
+                    <class name="12" type="player_item" var:address="0xD90A" />
+                    <class name="13" type="player_item" var:address="0xD90C" />
+                    <class name="14" type="player_item" var:address="0xD90E" />
+                    <class name="15" type="player_item" var:address="0xD910" />
+                    <class name="16" type="player_item" var:address="0xD912" />
+                    <class name="17" type="player_item" var:address="0xD914" />
+                    <class name="18" type="player_item" var:address="0xD916" />
+                    <class name="19" type="player_item" var:address="0xD918" />
+                    <class name="20" type="player_item" var:address="0xD91A" />
+                    <class name="21" type="player_item" var:address="0xD91C" />
+                    <class name="22" type="player_item" var:address="0xD91E" />
+                    <class name="23" type="player_item" var:address="0xD920" />
+                    <class name="24" type="player_item" var:address="0xD922" />
+                    <class name="25" type="player_item" var:address="0xD924" />
+                    <class name="26" type="player_item" var:address="0xD926" />
+                    <class name="27" type="player_item" var:address="0xD928" />
+                    <class name="28" type="player_item" var:address="0xD92A" />
+                    <class name="29" type="player_item" var:address="0xD92C" />
+                    <class name="30" type="player_item" var:address="0xD92E" />
+                    <class name="31" type="player_item" var:address="0xD930" />
+                    <class name="32" type="player_item" var:address="0xD932" />
+                    <class name="33" type="player_item" var:address="0xD934" />
+                    <class name="34" type="player_item" var:address="0xD936" />
+                    <class name="35" type="player_item" var:address="0xD938" />
+                    <class name="36" type="player_item" var:address="0xD93A" />
+                    <class name="37" type="player_item" var:address="0xD93C" />
+                    <class name="38" type="player_item" var:address="0xD93E" />
+                    <class name="39" type="player_item" var:address="0xD940" />
+                    <class name="40" type="player_item" var:address="0xD942" />
+                    <class name="41" type="player_item" var:address="0xD944" />
+                    <class name="42" type="player_item" var:address="0xD946" />
+                    <class name="43" type="player_item" var:address="0xD948" />
+                    <class name="44" type="player_item" var:address="0xD94A" />
+                    <class name="45" type="player_item" var:address="0xD94C" />
+                    <class name="46" type="player_item" var:address="0xD94E" />
+                    <class name="47" type="player_item" var:address="0xD950" />
+                    <class name="48" type="player_item" var:address="0xD952" />
+                    <class name="49" type="player_item" var:address="0xD954" />
+                </items>
+            </item_storage>
+        </pc>
     </properties>
 
     <references>
